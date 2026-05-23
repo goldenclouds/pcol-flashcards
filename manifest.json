@@ -1,0 +1,25 @@
+{
+  "name": "PCOL2021 Flashcards",
+  "short_name": "PCOL2021",
+  "description": "Spaced repetition flashcards for PCOL2021 exam preparation",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0e14",
+  "theme_color": "#5bc8f5",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#5bc8f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PCOL2021">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>PCOL2021 Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Lora:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="dark"]{
+    --bg:#0c0e14;--surface:#13161e;--surface2:#1a1e29;--border:#252a38;
+    --text:#e2e6f0;--muted:#6e7590;--dim:#3a3f52;
+    --m1:#5bc8f5;--m2:#b07aff;--m3:#5ee8b0;--m4:#f97060;
+    --easy:#3ecf8e;--good:#5bc8f5;--hard:#f0c040;--again:#f06a6a;
+    --shadow:0 4px 20px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f5f0;--surface:#ffffff;--surface2:#f0ede6;--border:#e2ddd4;
+    --text:#1c1a16;--muted:#5a5550;--dim:#9a9590;
+    --m1:#0e7eb8;--m2:#7541b8;--m3:#1a8a52;--m4:#c44d3a;
+    --easy:#1a8a52;--good:#0e7eb8;--hard:#a86e0a;--again:#c44d3a;
+    --shadow:0 4px 20px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;}
+  body{background:var(--bg);color:var(--text);font-family:'Lora',serif;display:flex;flex-direction:column;font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+  
+  /* Top safe area for notch */
+  .safe-top{padding-top:env(safe-area-inset-top);}
+  .safe-bottom{padding-bottom:env(safe-area-inset-bottom);}
+
+  /* ── Header ── */
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:11px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  header h1{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  header h1 span{color:var(--m1);}
+  .icon-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0;transition:all .15s;}
+  .icon-btn:hover,.icon-btn:active{background:var(--surface2);color:var(--text);}
+
+  /* ── Stats strip ── */
+  .stats-strip{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:6px 12px;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0;}
+  .stats-strip::-webkit-scrollbar{display:none;}
+  .stat{font-family:'DM Mono',monospace;font-size:10px;padding:5px 11px;border-radius:18px;border:1px solid var(--border);white-space:nowrap;display:flex;align-items:center;gap:5px;}
+  .stat-new{border-color:rgba(91,200,245,.4);color:var(--m1);}
+  .stat-review{border-color:rgba(176,122,255,.4);color:var(--m2);}
+  .stat-done{border-color:rgba(94,232,176,.45);color:var(--m3);}
+  .stat-streak{border-color:rgba(249,112,96,.4);color:var(--m4);}
+  .stat-exam{background:rgba(240,106,106,.08);border-color:rgba(240,106,106,.5);color:var(--m4);font-weight:600;}
+
+  /* ── Filter pills ── */
+  .filters{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:9px 12px;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0;}
+  .filters::-webkit-scrollbar{display:none;}
+  .filter-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:18px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;}
+  .filter-btn.active.all{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .filter-btn.active.m1{background:rgba(91,200,245,.15);border-color:var(--m1);color:var(--m1);}
+  .filter-btn.active.m2{background:rgba(176,122,255,.15);border-color:var(--m2);color:var(--m2);}
+  .filter-btn.active.m3{background:rgba(94,232,176,.15);border-color:var(--m3);color:var(--m3);}
+  .filter-btn.active.m4{background:rgba(249,112,96,.15);border-color:var(--m4);color:var(--m4);}
+
+  /* ── Progress bar ── */
+  .progress-wrap{height:3px;background:var(--border);flex-shrink:0;}
+  .progress-bar{height:3px;background:linear-gradient(90deg,var(--m1),var(--m2));transition:width .4s ease;}
+
+  /* ── Main card area ── */
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:16px 12px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .card-wrap{width:100%;max-width:520px;display:flex;flex-direction:column;}
+  
+  .card-meta{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;font-size:10px;}
+  .module-badge{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:14px;}
+  .badge-m1{background:rgba(91,200,245,.12);border:1px solid rgba(91,200,245,.3);color:var(--m1);}
+  .badge-m2{background:rgba(176,122,255,.12);border:1px solid rgba(176,122,255,.3);color:var(--m2);}
+  .badge-m3{background:rgba(94,232,176,.12);border:1px solid rgba(94,232,176,.3);color:var(--m3);}
+  .badge-m4{background:rgba(249,112,96,.12);border:1px solid rgba(249,112,96,.3);color:var(--m4);}
+  .anatomy-badge{font-family:'DM Mono',monospace;font-size:10px;padding:3px 9px;border-radius:14px;border:1px solid var(--border);color:var(--muted);background:var(--surface2);}
+  .card-type{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+  .card-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-left:auto;}
+  
+  /* ── Flashcard ── */
+  .flashcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;cursor:pointer;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s;display:flex;flex-direction:column;}
+  .flashcard:active{transform:scale(.99);}
+  .flashcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+  .flashcard.m1::before{background:var(--m1);}
+  .flashcard.m2::before{background:var(--m2);}
+  .flashcard.m3::before{background:var(--m3);}
+  .flashcard.m4::before{background:var(--m4);}
+
+  .card-front{padding:22px 22px 14px;display:flex;flex-direction:column;min-height:140px;}
+  .card-back{padding:18px 22px 14px;border-top:1px solid var(--border);background:var(--surface2);display:none;}
+  .flashcard.revealed .card-back{display:block;}
+
+  .card-q{font-family:'Syne',sans-serif;font-size:18px;font-weight:600;line-height:1.4;color:var(--text);margin-bottom:10px;}
+  .card-hint{font-size:12px;color:var(--muted);font-style:italic;margin-top:auto;padding-top:10px;border-top:1px dashed var(--dim);}
+  
+  /* Anatomy mini-map */
+  .anatomy-map{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 0;border-top:1px dashed var(--dim);margin-top:8px;}
+  .anatomy-pill{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--muted);}
+  .anatomy-pill.heart{color:var(--m4);border-color:rgba(249,112,96,.3);background:rgba(249,112,96,.06);}
+  .anatomy-pill.lungs{color:var(--m1);border-color:rgba(91,200,245,.3);background:rgba(91,200,245,.06);}
+  .anatomy-pill.brain{color:var(--m2);border-color:rgba(176,122,255,.3);background:rgba(176,122,255,.06);}
+  .anatomy-pill.liver{color:var(--hard);border-color:rgba(240,192,64,.3);background:rgba(240,192,64,.06);}
+  .anatomy-pill.kidney{color:var(--m3);border-color:rgba(94,232,176,.3);background:rgba(94,232,176,.06);}
+  .anatomy-pill.gut{color:var(--easy);border-color:rgba(62,207,142,.3);background:rgba(62,207,142,.06);}
+
+  .tap-prompt{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);text-align:center;padding:9px;letter-spacing:.06em;text-transform:uppercase;}
+  .flashcard.revealed .tap-prompt{display:none;}
+  
+  .answer-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .card-a{font-size:14px;line-height:1.78;color:var(--text);}
+  .card-a strong{color:var(--text);font-weight:600;}
+  [data-theme="dark"] .card-a strong{color:#fff;}
+  .card-a em{color:var(--m1);font-style:normal;font-weight:600;}
+  .card-a .step{display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;}
+  .card-a .step-n{font-family:'DM Mono',monospace;font-size:10px;background:var(--dim);color:var(--surface);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  
+  .memory-hook{margin-top:10px;background:rgba(176,122,255,.08);border:1px solid rgba(176,122,255,.22);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--m2);line-height:1.6;}
+  .memory-hook::before{content:'🧠  ';}
+  .exam-flag{margin-top:7px;background:rgba(249,112,96,.08);border:1px solid rgba(249,112,96,.22);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--m4);font-family:'DM Mono',monospace;line-height:1.55;}
+  .exam-flag::before{content:'⚠️ EXAM TRAP: ';font-weight:700;}
+
+  /* ── Rating buttons ── */
+  .rating-wrap{display:none;gap:6px;padding:0 14px 12px;}
+  .flashcard.revealed .rating-wrap{display:flex;}
+  .rating-btn{flex:1;padding:12px 4px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;text-align:center;transition:all .12s;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .rating-btn:active{transform:scale(.96);}
+  .btn-again{background:rgba(240,106,106,.12);color:var(--again);border:1px solid rgba(240,106,106,.3);}
+  .btn-hard{background:rgba(240,192,64,.1);color:var(--hard);border:1px solid rgba(240,192,64,.28);}
+  .btn-good{background:rgba(91,200,245,.1);color:var(--good);border:1px solid rgba(91,200,245,.28);}
+  .btn-easy{background:rgba(62,207,142,.1);color:var(--easy);border:1px solid rgba(62,207,142,.28);}
+  .rating-label{font-size:9px;opacity:.7;}
+  .rating-next{font-size:8px;opacity:.5;}
+
+  /* ── Finished screen ── */
+  .finished{text-align:center;padding:40px 24px;display:none;}
+  .finished h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-bottom:6px;}
+  .finished p{color:var(--muted);font-size:13px;line-height:1.6;max-width:380px;margin:0 auto 22px;}
+  .review-summary{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:22px;}
+  .summary-chip{font-family:'DM Mono',monospace;font-size:11px;padding:5px 12px;border-radius:7px;border:1px solid var(--border);}
+  .btn-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+  .restart-btn{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:11px 22px;border-radius:8px;border:none;background:var(--m1);color:var(--bg);cursor:pointer;font-weight:600;}
+  .restart-due-btn{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:11px 22px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;}
+
+  /* ── Modal (for settings) ── */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:flex-end;justify-content:center;padding:0;animation:fadeIn .2s;}
+  .modal-backdrop.open{display:flex;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .modal{background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:slideUp .25s;padding:20px 20px calc(20px + env(safe-area-inset-bottom));}
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:-8px auto 16px;}
+  .modal h2{font-family:'Syne',sans-serif;font-size:20px;color:var(--text);margin-bottom:18px;}
+  .modal-section{margin-bottom:20px;}
+  .modal-section h3{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;}
+  .modal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+  .modal-row label{font-size:14px;color:var(--text);}
+  .modal-row input[type="date"],.modal-row input[type="number"]{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 11px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;}
+  .modal-row input[type="date"]{color-scheme:dark;}
+  [data-theme="light"] .modal-row input[type="date"]{color-scheme:light;}
+  .modal-row input[type="number"]{width:80px;text-align:center;}
+  .countdown-box{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px;margin-top:10px;text-align:center;}
+  .countdown-days{font-family:'DM Mono',monospace;font-size:32px;font-weight:700;color:var(--m4);margin-bottom:4px;}
+  .countdown-label{font-size:12px;color:var(--muted);}
+  .recommend-box{background:rgba(91,200,245,.08);border:1px solid rgba(91,200,245,.3);border-radius:7px;padding:10px 12px;margin-top:10px;font-size:12px;color:var(--m1);line-height:1.6;}
+  .modal-btn{display:block;width:100%;padding:12px;background:var(--m1);color:var(--bg);border:none;border-radius:8px;font-family:'DM Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-top:8px;}
+  .modal-btn-secondary{background:transparent;border:1px solid var(--border);color:var(--muted);}
+  .theme-toggle{display:flex;background:var(--surface2);border-radius:8px;padding:3px;}
+  .theme-toggle button{flex:1;padding:8px;background:transparent;border:none;border-radius:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;}
+  .theme-toggle button.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+
+  /* ── History panel ── */
+  .history-panel{background:var(--surface);border-top:1px solid var(--border);padding:8px 12px 10px;flex-shrink:0;}
+  .history-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+  .history-grid{display:flex;gap:3px;justify-content:space-between;}
+  .history-dot{flex:1;min-width:0;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;font-weight:600;}
+  .dot-empty{background:var(--surface2);border:1px solid var(--border);color:var(--dim);}
+  .dot-low{background:rgba(94,232,176,.15);border:1px solid rgba(94,232,176,.3);color:var(--m3);}
+  .dot-med{background:rgba(94,232,176,.3);border:1px solid rgba(94,232,176,.5);color:var(--m3);}
+  .dot-high{background:rgba(94,232,176,.55);border:1px solid var(--m3);color:#fff;}
+  .dot-today{outline:2px solid var(--m1);outline-offset:1px;}
+  
+  /* PWA install hint */
+  .install-hint{position:fixed;bottom:20px;left:12px;right:12px;background:var(--surface);border:1px solid var(--m1);border-radius:12px;padding:12px 16px;display:none;z-index:500;font-size:12px;box-shadow:var(--shadow);animation:slideUp .3s;}
+  .install-hint.show{display:block;}
+  .install-hint strong{color:var(--m1);}
+  .install-hint .close{float:right;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 0 0 8px;}
+</style>
+</head>
+<body>
+
+<div class="safe-top">
+<header>
+  <h1>PCOL <span>SRS</span></h1>
+  <button class="icon-btn" id="btn-settings" onclick="openSettings()" title="Settings">⚙️</button>
+  <button class="icon-btn" id="btn-theme" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+</header>
+
+<div class="stats-strip">
+  <span class="stat stat-exam" id="stat-exam-days">— days to exam</span>
+  <span class="stat stat-new" id="stat-new">— new</span>
+  <span class="stat stat-review" id="stat-review">— due</span>
+  <span class="stat stat-done" id="stat-done">— learned</span>
+  <span class="stat stat-streak" id="stat-streak">— streak 🔥</span>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active all" onclick="setFilter('all')">All</button>
+  <button class="filter-btn m1" onclick="setFilter('m1')">M1 PD</button>
+  <button class="filter-btn m2" onclick="setFilter('m2')">M2 MolPharm</button>
+  <button class="filter-btn m3" onclick="setFilter('m3')">M3 PK</button>
+  <button class="filter-btn m4" onclick="setFilter('m4')">M4 DrugDev</button>
+</div>
+
+<div class="progress-wrap"><div class="progress-bar" id="progress" style="width:0%"></div></div>
+</div>
+
+<main>
+  <div class="card-wrap" id="card-wrap">
+    <div class="card-meta" id="card-meta"></div>
+    <div class="flashcard" id="flashcard" onclick="reveal()">
+      <div class="card-front">
+        <div class="card-q" id="card-q"></div>
+        <div class="anatomy-map" id="anatomy-map"></div>
+        <div class="card-hint" id="card-hint"></div>
+      </div>
+      <div class="card-back">
+        <div class="answer-label">Answer</div>
+        <div class="card-a" id="card-a"></div>
+        <div id="card-memory"></div>
+        <div id="card-exam"></div>
+      </div>
+      <div class="rating-wrap">
+        <button class="rating-btn btn-again" onclick="rate(1,event)">Again<span class="rating-label">Didn't know</span><span class="rating-next" id="next-again"></span></button>
+        <button class="rating-btn btn-hard" onclick="rate(2,event)">Hard<span class="rating-label">Struggled</span><span class="rating-next" id="next-hard"></span></button>
+        <button class="rating-btn btn-good" onclick="rate(3,event)">Good<span class="rating-label">Got it</span><span class="rating-next" id="next-good"></span></button>
+        <button class="rating-btn btn-easy" onclick="rate(4,event)">Easy<span class="rating-label">Nailed it</span><span class="rating-next" id="next-easy"></span></button>
+      </div>
+      <div class="tap-prompt">Tap card to reveal answer</div>
+    </div>
+  </div>
+  
+  <div class="finished" id="finished">
+    <h2>Session Complete 🎉</h2>
+    <p id="finished-msg">All due cards reviewed. Come back tomorrow!</p>
+    <div class="review-summary" id="review-summary"></div>
+    <div class="btn-row">
+      <button class="restart-due-btn" onclick="restartDue()">Due Only</button>
+      <button class="restart-btn" onclick="restart()">Study All</button>
+    </div>
+  </div>
+</main>
+
+<div class="history-panel safe-bottom">
+  <div class="history-title">
+    <span>Last 14 days</span>
+    <span id="history-total">0 cards total</span>
+  </div>
+  <div class="history-grid" id="history-grid"></div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-backdrop" id="modal-settings" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Settings</h2>
+    
+    <div class="modal-section">
+      <h3>Theme</h3>
+      <div class="theme-toggle">
+        <button id="theme-light" onclick="setTheme('light')">☀️ Light</button>
+        <button id="theme-dark" onclick="setTheme('dark')">🌙 Dark</button>
+        <button id="theme-auto" onclick="setTheme('auto')">⚙️ Auto</button>
+      </div>
+    </div>
+    
+    <div class="modal-section">
+      <h3>Exam Date</h3>
+      <div class="modal-row">
+        <label for="exam-date">Date you need to know everything by:</label>
+        <input type="date" id="exam-date" onchange="setExamDate(this.value)">
+      </div>
+      <div class="countdown-box">
+        <div class="countdown-days" id="countdown-days">—</div>
+        <div class="countdown-label" id="countdown-label">Set your exam date</div>
+      </div>
+      <div class="recommend-box" id="recommend-box" style="display:none;"></div>
+    </div>
+    
+    <div class="modal-section">
+      <h3>Daily Limits</h3>
+      <div class="modal-row">
+        <label for="daily-new">New cards per day</label>
+        <input type="number" id="daily-new" min="1" max="50" value="20" onchange="setDailyLimit('new',this.value)">
+      </div>
+      <div class="modal-row">
+        <label for="daily-review">Max reviews per day</label>
+        <input type="number" id="daily-review" min="10" max="200" value="100" onchange="setDailyLimit('review',this.value)">
+      </div>
+    </div>
+    
+    <div class="modal-section">
+      <h3>Data</h3>
+      <button class="modal-btn modal-btn-secondary" onclick="exportData()">Export Progress (Backup)</button>
+      <button class="modal-btn modal-btn-secondary" onclick="document.getElementById('import-input').click()">Import Progress</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
+      <button class="modal-btn modal-btn-secondary" onclick="if(confirm('Reset all progress? This cannot be undone.')) resetAll()" style="color:var(--again);border-color:rgba(240,106,106,.3);">Reset All Progress</button>
+    </div>
+    
+    <button class="modal-btn" onclick="closeSettings()">Done</button>
+  </div>
+</div>
+
+<div class="install-hint" id="install-hint">
+  <button class="close" onclick="document.getElementById('install-hint').classList.remove('show')">×</button>
+  <strong>💡 Install this app:</strong> Tap <strong>Share</strong> in Safari, then <strong>Add to Home Screen</strong>.
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// CARD DATA — all 50 exam-aligned PCOL cards
+// With anatomy tags showing where the concept acts
+// ════════════════════════════════════════════════
+const CARD_DEFS = [
+
+{id:1,mod:'m1',type:'Term',anatomy:['systemic'],
+q:'What are the 4 main drug targets? Give one example of each. (RICE)',
+hint:'Receptors, Ion channels, Carrier molecules, Enzymes',
+a:'<strong>R</strong>eceptors — protein sensors for chemical signals. Example: β₂-adrenoceptor → salbutamol.<br><strong>I</strong>on channels — protein gateways for specific ions. Example: nAChR (ligand-gated); Na⁺ channel (voltage-gated — local anaesthetics block it).<br><strong>C</strong>arrier molecules (transporters) — move ions/molecules against gradient. Example: dopamine transporter (DAT) — blocked by cocaine. Choline transporter — reuptake of choline after ACh degradation.<br><strong>E</strong>nzymes — catalyse reactions; drugs inhibit or act as false substrates. Example: aspirin → COX (irreversible inhibitor). Enalapril → ACE inhibitor (prodrug).',
+memory:'"RICE" — Receptors, Ion channels, Carrier molecules, Enzymes.',
+exam:null},
+
+{id:2,mod:'m1',type:'Term',anatomy:['systemic'],
+q:'What are the 4 ways drugs are classified? (MMMT)',
+hint:'Molecular structure, Mechanism, Mode, Therapeutic use',
+a:'<strong>M</strong>olecular structure — e.g. diazepam is a <em>benzodiazepine</em>.<br><strong>M</strong>echanism of action — e.g. atenolol is a <em>beta blocker</em>.<br><strong>M</strong>ode of action — e.g. furosemide is a <em>loop diuretic</em>.<br><strong>T</strong>herapeutic use — e.g. paracetamol is a <em>non-opioid analgesic</em>.',
+memory:'"MMMT" — Most Medicines Meet Treatment goals.',
+exam:null},
+
+{id:3,mod:'m1',type:'Process',anatomy:['nerves','muscle','heart','brain'],
+q:'Walk through the 4 receptor superfamilies. For which two must you know the mechanism in detail?',
+hint:'LGIC + Gαq/Gαs GPCRs are the detailed ones',
+a:'<div class="step"><div class="step-n">1</div><div><strong>LGIC (ionotropic)</strong> — ~20 TM segments around aqueous channel. Bind agonist → channel opens → fast response in <em>ms</em>. Example: nAChR, GABA<sub>A</sub>.</div></div><div class="step"><div class="step-n">2</div><div><strong>GPCRs (metabotropic)</strong> — 7 TM domains, G-protein cascade. Response in <em>seconds</em>. Example: mAChR, β₂.</div></div><div class="step"><div class="step-n">3</div><div><strong>Kinase-linked (RTKs)</strong> — 1 TM helix, intracellular kinase cascade. <em>Minutes</em>. Example: insulin receptor.</div></div><div class="step"><div class="step-n">4</div><div><strong>Nuclear receptors</strong> — gene transcription. <em>Hours–days</em>. Example: glucocorticoid receptor.</div></div>',
+memory:'"I Go Kill Nazis" = Ionotropic, GPCR, Kinase, Nuclear. Fastest → slowest.',
+exam:null},
+
+{id:4,mod:'m1',type:'Process',anatomy:['gut','lungs','blood-vessels'],
+q:'Describe the Gαq GPCR signalling pathway with smooth muscle contraction.',
+hint:'PLC → IP₃ + DAG → Ca²⁺ → contraction',
+a:'<strong>Gαq pathway:</strong><br><div class="step"><div class="step-n">1</div><div>Agonist binds GPCR → Gαq activated</div></div><div class="step"><div class="step-n">2</div><div>Activates <em>phospholipase C (PLC)</em></div></div><div class="step"><div class="step-n">3</div><div>PLC cleaves PIP₂ → <em>IP₃ + DAG</em></div></div><div class="step"><div class="step-n">4</div><div>IP₃ releases Ca²⁺ from ER → ↑intracellular Ca²⁺</div></div><div class="step"><div class="step-n">5</div><div>Ca²⁺ activates MLCK → <em>smooth muscle contracts</em></div></div><br>Examples: M1, M3 mAChR; α₁-adrenoceptor; H1 histamine.',
+memory:'"Gαq = Quite exciting. PLC → IP₃ + DAG → Ca²⁺ → Contract."',
+exam:null},
+
+{id:5,mod:'m1',type:'Process',anatomy:['heart','lungs'],
+q:'Describe Gαs and Gαi pathways with heart rate examples.',
+hint:'Gαs ↑cAMP (tachycardia), Gαi ↓cAMP (bradycardia)',
+a:'<strong>Gαs:</strong> Agonist → Gαs → activates adenylyl cyclase → ↑cAMP → PKA.<br>Heart: NA → β₁ → Gαs → <em>↑HR + force (tachycardia)</em>.<br>Lungs: salbutamol → β₂ → Gαs → ↑cAMP → smooth muscle <em>relaxes (bronchodilation)</em>.<br><br><strong>Gαi:</strong> Agonist → Gαi → <em>inhibits</em> adenylyl cyclase → ↓cAMP.<br>Heart: ACh → M₂ → Gαi → <em>↓HR (bradycardia)</em>.<br>Synapse: NA → α₂ → ↓further NA release (presynaptic).',
+memory:'"Gαs = Stimulatory. Gαi = Inhibitory. Both converge on cAMP."',
+exam:null},
+
+{id:6,mod:'m1',type:'Concept',anatomy:['heart','lungs'],
+q:'What is physiological antagonism? Give heart AND lung examples.',
+hint:'Two receptors, two pathways, opposite effects on same organ',
+a:'<strong>Physiological antagonism</strong> = two substances produce opposing effects at the <em>same organ</em> via <em>different receptors</em> and different pathways.<br><br><strong>Heart:</strong> NA → β₁ → ↑cAMP → ↑HR vs ACh → M₂ → ↓cAMP → ↓HR.<br><br><strong>Lung airways:</strong> ACh → M₃ → ↑Ca²⁺ → <em>bronchoconstriction</em> vs Adrenaline → β₂ → ↑cAMP → <em>bronchodilation</em>.',
+memory:'"PNS = Pull (slows, constricts). SNS = Push (speeds, dilates)."',
+exam:null},
+
+{id:7,mod:'m1',type:'Term',anatomy:['systemic'],
+q:'Define: Affinity (Kd), Efficacy, Potency (EC₅₀), Specificity, and Selectivity.',
+hint:'5 key PD terms',
+a:'<strong>Affinity</strong> = strength of binding. K<sub>D</sub> = conc at 50% receptor occupancy. Lower K<sub>D</sub> = higher affinity.<br><br><strong>Efficacy</strong> = magnitude of effect once bound. Full agonist α=1; partial 0<α<1; antagonist=0.<br><br><strong>Potency</strong> = concentration for 50% maximal response = <em>EC₅₀</em>. Lower EC₅₀ = more potent.<br><br><strong>Specificity</strong> = degree drug recognises a single target. No drug fully specific.<br><br><strong>Selectivity</strong> = ability to produce one effect over another. Example: atenolol selective for β₁ over β₂.',
+memory:'"Affinity = grip. Efficacy = effect. Potency = how little you need."',
+exam:'K<sub>D</sub> ≠ EC₅₀. K<sub>D</sub> = binding measure. EC₅₀ = functional measure. Only equal when no spare receptors.'},
+
+{id:8,mod:'m1',type:'Process',anatomy:['systemic'],
+q:'What is the Hill-Langmuir equation? What shape on linear vs log scale?',
+hint:'Rectangular hyperbola → sigmoidal',
+a:'<strong>Hill-Langmuir:</strong> Occupancy = [A]ⁿ / (K<sub>D</sub>ⁿ + [A]ⁿ)<br><br>n = Hill coefficient (cooperativity).<br><br><strong>Linear/linear plot</strong> → <em>rectangular hyperbola</em>.<br><strong>Log conc / linear response</strong> → <em>sigmoidal S-curve</em> — EC₅₀ at midpoint.<br><br>n > 1 = positive cooperativity (steeper). n = 1 = simple binding.',
+memory:'"Linear = hyperbola. Log = S-curve. EC₅₀ = midpoint of S."',
+exam:null},
+
+{id:9,mod:'m1',type:'Concept',anatomy:['systemic'],
+q:'What is a Scatchard plot? What does slope and x-intercept tell you?',
+hint:'Radioligand binding — slope = -1/Kd, x-int = Bmax',
+a:'Scatchard plots <strong>Bound/Free (B/F)</strong> on y-axis vs <strong>Bound (B)</strong> on x-axis.<br><br>For single binding site:<br>• Straight line<br>• <strong>Slope = −1/K<sub>D</sub></strong> (steeper = higher affinity)<br>• <strong>x-intercept = B<sub>max</sub></strong> = receptor density<br><br>Curved plot = multiple receptor types or cooperativity.',
+memory:'"Slope gives Kd. x-intercept gives Bmax."',
+exam:null},
+
+{id:10,mod:'m1',type:'Concept',anatomy:['systemic'],
+q:'What is intrinsic activity? Distinguish full agonists, partial agonists, antagonists, inverse agonists.',
+hint:'α scale from -1 to 1',
+a:'<strong>Intrinsic activity (α)</strong> = ability to activate receptor once bound.<br><br><strong>Full agonist:</strong> α = 1 → maximal response.<br><strong>Partial agonist:</strong> 0 < α < 1 → submaximal response.<br><strong>Neutral antagonist:</strong> α = 0 → blocks without activating.<br><strong>Inverse agonist:</strong> α < 0 → reduces constitutive activity below baseline.',
+memory:'"Full = fully committed. Partial = half-hearted. Antagonist = bystander. Inverse = saboteur."',
+exam:'Inverse agonists only visible when receptors have constitutive activity. Without it, they look like neutral antagonists.'},
+
+{id:11,mod:'m1',type:'Process',anatomy:['systemic'],
+q:'What happens to a CRC with competitive reversible vs irreversible/allosteric antagonist?',
+hint:'Right shift only vs right shift + Emax depression',
+a:'<strong>Competitive reversible</strong> (e.g. atropine):<br>• Same orthosteric site competition<br>• Right shift → <em>Emax preserved</em><br>• Schild plot: slope = 1, x-intercept = pA₂<br><br><strong>Irreversible / allosteric:</strong><br>• Cannot be overcome<br>• Right shift + <em>Emax reduced</em><br>• Schild slope ≠ 1',
+memory:'"Competitive = same Emax. Irreversible = crushed Emax."',
+exam:'Emax preserved → competitive reversible. Emax falls → irreversible or allosteric. KEY distinguisher.'},
+
+{id:12,mod:'m1',type:'Concept',anatomy:['systemic'],
+q:'Define the Schild equation and interpret a Schild plot.',
+hint:'log(DR-1) vs log[B]',
+a:'<strong>Schild equation:</strong> log(DR − 1) = log[B] − log K<sub>B</sub><br><br>DR = EC₅₀ with antagonist ÷ EC₅₀ without<br>K<sub>B</sub> = antagonist dissociation constant<br><br><strong>Schild plot:</strong> log(DR−1) vs log[B]<br>• Slope = 1 → competitive reversible<br>• x-intercept = pA₂ = −log K<sub>B</sub><br>• K<sub>B</sub> independent of agonist properties',
+memory:'"Slope 1 = simple competition. pA₂ = floor crossing."',
+exam:null},
+
+{id:13,mod:'m1',type:'Concept',anatomy:['brain','nerves'],
+q:'What is biased agonism? Give the opioid example.',
+hint:'Same receptor, different intracellular pathway',
+a:'<strong>Biased agonism</strong> = GPCR ligand preferentially activates one signalling pathway over another at the same receptor.<br><br>GPCR signals via: (1) G-protein → second messengers, or (2) β-arrestin → internalisation + non-canonical signalling.<br><br><strong>Opioid example:</strong> μ-opioid receptor:<br>• G-protein pathway → <em>analgesia</em><br>• β-arrestin pathway → <em>respiratory depression, tolerance</em><br><br>G-protein biased opioid = pain relief without dangerous side effects.',
+memory:'"Same lock, different consequences depending on the messenger."',
+exam:null},
+
+{id:14,mod:'m1',type:'Process',anatomy:['systemic'],
+q:'Describe receptor desensitisation — 2 mechanisms. Difference between desensitisation, downregulation, tolerance?',
+hint:'Loss of coupling (mins) → endocytosis (hours)',
+a:'<strong>Mechanism 1 — Loss of coupling (mins):</strong> GRK/BARK phosphorylates receptor C-terminus → β-arrestin binds → uncouples from G-protein → silent.<br><br><strong>Mechanism 2 — Endocytosis (hours):</strong> β-arrestin promotes clathrin-mediated endocytosis → receptor removed from surface (downregulation).<br><br><strong>Mechanism 3:</strong> Exhaustion of mediators (e.g. amphetamine depletes NA).<br><br><strong>Tolerance</strong> = umbrella term = desensitisation + downregulation + metabolic adaptation.',
+memory:'"DDT = Drug → Desensitise (mins) → Take receptor away (hours)."',
+exam:null},
+
+{id:15,mod:'m1',type:'Concept',anatomy:['brain','muscle'],
+q:'Orthosteric vs allosteric binding? What are PAM and NAM?',
+hint:'Primary site vs secondary site',
+a:'<strong>Orthosteric</strong> = primary (endogenous agonist) binding site.<br><strong>Allosteric</strong> = distinct site → indirectly influences agonist effects.<br><br><strong>PAM (Positive Allosteric Modulator):</strong> ↑agonist affinity/efficacy. Example: benzodiazepines at GABA<sub>A</sub> → anxiolysis.<br><br><strong>NAM (Negative):</strong> ↓agonist affinity/efficacy → right shift + Emax depression.<br><br><strong>SAM (Silent):</strong> binds with no effect; blocks other allosteric modulators.',
+memory:'"PAM helps. NAM hinders. SAM stands silent."',
+exam:'Allosteric antagonists reduce Emax — this distinguishes from competitive reversible which preserves Emax.'},
+
+{id:16,mod:'m1',type:'Process',anatomy:['nerves','muscle'],
+q:'State the ANS golden rule. List the 2 exceptions.',
+hint:'Both PNS and SNS preganglionic → ACh',
+a:'<strong>ALL preganglionic fibres release ACh onto nAChR at the ganglion.</strong><br><br>After ganglion:<br>• PNS post → ACh → mAChR<br>• SNS post → NA → adrenoceptors<br><br><strong>Exception 1:</strong> Sweat glands — SNS innervation but post fibre releases <em>ACh</em><br><strong>Exception 2:</strong> Adrenal medulla — ACh innervation → releases adrenaline + NA into blood',
+memory:'"Pre = ACh everywhere. Post = ACh (PNS) or NA (SNS). Sweat = the ACh exception."',
+exam:'Sweat glands are sympathetic but use ACh. Most common ANS exam trap.'},
+
+{id:17,mod:'m1',type:'Concept',anatomy:['heart','gut','lungs','eye','glands'],
+q:'List M1–M3 muscarinic subtypes — G-protein and effects.',
+hint:'M1 ganglia, M2 heart, M3 smooth muscle',
+a:'<strong>M1</strong> — Gαq. Ganglia, CNS, gastric glands. Effect: gastric acid secretion.<br><strong>M2</strong> — Gαi. <em>Heart SA node</em>. Effect: <em>bradycardia</em>.<br><strong>M3</strong> — Gαq. Smooth muscle, glands, eye. Effect: contraction, secretion, miosis, accommodation.',
+memory:'"M2 = My heart, Inhibitory (Gαi). M1 & M3 = Quite exciting (Gαq)."',
+exam:'M2 = Gαi (slows heart). M3 = Gαq (contracts smooth muscle). Do not swap.'},
+
+{id:18,mod:'m1',type:'Concept',anatomy:['glands','gut','bladder','eye','heart'],
+q:'List the muscarinic effects of ACh (SLUDGE + extras).',
+hint:'Parasympathetic — rest and digest',
+a:'<strong>SLUDGE:</strong><br><strong>S</strong>alivation, <strong>L</strong>acrimation, <strong>U</strong>rination, <strong>D</strong>efecation, <strong>G</strong>I motility ↑, <strong>E</strong>mesis<br><br><strong>Extras:</strong><br>• Bradycardia (M2 heart)<br>• Bronchoconstriction (M3 airways)<br>• Miosis — pupil constriction (M3 iris)<br>• Accommodation — near vision (M3 ciliary muscle)<br><br>Caused by: organophosphate poisoning (AChE inhibition) or muscarine toxicity. Treated with atropine.',
+memory:'"SLUDGE + bradycardia + bronchoconstriction + miosis."',
+exam:null},
+
+{id:19,mod:'m1',type:'Concept',anatomy:['heart','lungs','blood-vessels','bladder'],
+q:'List all 5 adrenoceptors with G-protein, effect, and drug.',
+hint:'α1, α2, β1, β2, β3',
+a:'<strong>α₁</strong> — Gαq → ↑Ca²⁺ → <em>vasoconstriction</em>. Phenylephrine; tamsulosin (α1A, BPH).<br><strong>α₂</strong> — Gαi → ↓cAMP → <em>presynaptic NA inhibition</em>. Clonidine.<br><strong>β₁</strong> — Gαs → ↑cAMP → <em>↑HR + force</em>. Atenolol (blocker).<br><strong>β₂</strong> — Gαs → ↑cAMP → <em>bronchodilation</em>. Salbutamol (agonist).<br><strong>β₃</strong> — Gαs → ↑cAMP → bladder relax + lipolysis. Mirabegron.',
+memory:'"VASCO for α / BRHB for β."',
+exam:'Propranolol (non-selective β) CONTRAINDICATED in asthma — blocks β₂ → bronchoconstriction.'},
+
+{id:20,mod:'m1',type:'Process',anatomy:['nerves','adrenals'],
+q:'Describe noradrenaline synthesis. What are the 3 fates of released NA?',
+hint:'Tyrosine → DOPA → DA → NA → ADR',
+a:'<strong>Synthesis:</strong> Tyrosine → DOPA → Dopamine → NA → Adrenaline (in adrenal medulla only)<br><br><strong>3 fates after release:</strong><br>1. <em>Reuptake</em> via NET → ~75% recycled<br>2. <em>Breakdown</em> by MAO and COMT<br>3. <em>α₂ autoreceptor feedback</em> → inhibits further release',
+memory:'"Tyrants Don\'t Deal Nice Around \'ere" = T-D-DA-NA-ADR.',
+exam:null},
+
+{id:21,mod:'m1',type:'Term',anatomy:['nerves','eye','muscle','gut','heart'],
+q:'Drugs acting on cholinergic receptors — give one example of each category.',
+hint:'Agonist, anticholinesterase, nicotinic blocker, muscarinic antagonist',
+a:'<strong>Cholinergic agonist:</strong> carbachol (glaucoma), bethanechol (urinary retention).<br><strong>Anticholinesterase:</strong> neostigmine (post-surgery), physostigmine (glaucoma), donepezil (Alzheimer\'s).<br><strong>Nicotinic NMJ blocker:</strong> tubocurarine, suxamethonium (surgery muscle relaxants).<br><strong>Muscarinic antagonist:</strong> atropine (bradycardia/OP poisoning), ipratropium (COPD), scopolamine (motion sickness).',
+memory:'"Cholinergic = mimic ACh. Anticholinergic = block ACh."',
+exam:null},
+
+{id:22,mod:'m2',type:'Term',anatomy:['systemic'],
+q:'What is the difference between pharmacodynamics and pharmacokinetics?',
+hint:'Drug→Body vs Body→Drug',
+a:'<strong>Pharmacodynamics (PD)</strong> = what the <em>drug does to the body</em>: receptor interactions and biological effects.<br><br><strong>Pharmacokinetics (PK)</strong> = what the <em>body does to the drug</em>: ADME (Absorption, Distribution, Metabolism, Elimination).',
+memory:'"PD = Drug→Body. PK = Body→Drug (Kinetics = movement)."',
+exam:null},
+
+{id:23,mod:'m2',type:'Concept',anatomy:['systemic'],
+q:'What is chirality and how does it influence drug activity?',
+hint:'Mirror image enantiomers — different biological effects',
+a:'<strong>Chirality</strong> = molecule non-superimposable on its mirror image. The mirror images = <em>enantiomers</em>.<br><br>Body proteins (enzymes, receptors) are chiral — so enantiomers may differ in:<br>• Pharmacology (one active, one inactive)<br>• Pharmacokinetics (different metabolism)<br>• Toxicity<br><br><strong>Example: Omeprazole</strong> — racemic mixture. <em>S-omeprazole (esomeprazole)</em> is more active enantiomer.',
+memory:'"Chirality = handedness. Receptor = right-handed glove — only right-handed drug fits."',
+exam:null},
+
+{id:24,mod:'m2',type:'Process',anatomy:['gut','blood'],
+q:'What is pKa? Use Henderson-Hasselbalch to predict drug absorption.',
+hint:'Only un-ionised crosses membranes',
+a:'<strong>pKa</strong> = pH at which 50% drug ionised, 50% un-ionised.<br><br><strong>Henderson-Hasselbalch:</strong><br>Weak acid: pH − pKa = log([A⁻]/[HA])<br>Weak base: pH − pKa = log([B]/[BH⁺])<br><br><strong>Only un-ionised crosses membranes.</strong><br><br>Aspirin (weak acid, pKa 3.5) in stomach (pH 2): mostly un-ionised → absorbed well.<br>Morphine (weak base, pKa 8.2) in stomach (pH 2): mostly ionised → NOT absorbed; better in intestine.',
+memory:'"Acids love acid. Bases hate acid. Trapped = ionised = stuck."',
+exam:'Identify weak acid vs weak base FIRST. Direction flips opposite for each.'},
+
+{id:25,mod:'m2',type:'Process',anatomy:['systemic'],
+q:'List 6 drug-receptor binding forces. Which is irreversible?',
+hint:'CLICK HVD',
+a:'<strong>1. Covalent</strong> (100–800 kJ/mol) — <em>irreversible</em>. Aspirin→COX.<br><strong>2. Ionic</strong> (100–500) — N⁺ ↔ Asp/Glu. ACh→mAChR.<br><strong>3. Ion-dipole</strong> (~30–40) — N⁺ ↔ Ser hydroxyl.<br><strong>4. Cation-π / π–π</strong> — N⁺ ↔ aromatic ring.<br><strong>5. H-bonds</strong> (~40) — directional, common.<br><strong>6. Hydrophobic/VDW</strong> (1–20) — weakest.',
+memory:'"Chemistry Lets Incredibly Clever Kids Handle Drugs" — strongest to weakest.',
+exam:'Covalent = irreversible. All others = reversible. Binding = SUM of many weak bonds.'},
+
+{id:26,mod:'m2',type:'Concept',anatomy:['nerves','muscle'],
+q:'Why can ACh bind both mAChR and nAChR but muscarine only binds mAChR?',
+hint:'Flexible vs rigid ring',
+a:'ACh freely rotates → adopts multiple conformations:<br>• Gauche (s-cis) → fits mAChR<br>• Anti (trans) → fits nAChR<br><br>Muscarine has rigid <em>tetrahydrofuran ring</em> locked in gauche only → cannot adopt anti for nAChR → steric clash in nAChR pocket.',
+memory:'"ACh = shape-shifter. Muscarine = rigid one-trick pony."',
+exam:null},
+
+{id:27,mod:'m2',type:'Process',anatomy:['gut','bladder','eye'],
+q:'Compare SAR of Carbachol, Methacholine, Bethanechol vs ACh.',
+hint:'β-methyl = selectivity; carbamate = stability',
+a:'<strong>ACh:</strong> ester; full agonist mAChR+nAChR; rapidly hydrolysed.<br><strong>Carbachol:</strong> ester→carbamate bioisostere. Same activity but NOT hydrolysed → longer duration.<br><strong>Methacholine:</strong> β-methyl added → mAChR selective (steric clash at nAChR).<br><strong>Bethanechol:</strong> β-methyl + carbamate → mAChR selective AND AChE-resistant. Used in urinary retention.',
+memory:'"β-methyl = selectivity. Carbamate = stability. Bethanechol = both."',
+exam:null},
+
+{id:28,mod:'m2',type:'Concept',anatomy:['nerves'],
+q:'What is a bioisostere? Explain why carbachol resists AChE hydrolysis.',
+hint:'Same binding, different fate',
+a:'<strong>Bioisostere</strong> = chemical group replacing another while maintaining binding but improving PK.<br><br>ACh ester (–OCOCH₃) → hydrolysed by AChE serine attack on carbonyl.<br>Carbachol carbamate (–OCONH₂) → same shape/charge → binds equally. BUT: NH₂ makes carbonyl less electrophilic → AChE attacks slowly → NOT effectively hydrolysed → longer action.',
+memory:'"Same binding. Different fate."',
+exam:null},
+
+{id:29,mod:'m2',type:'Process',anatomy:['nerves','muscle'],
+q:'Describe AChE active site and the 2-step ACh hydrolysis mechanism.',
+hint:'Ser-His-Glu triad. Acetylation then deacetylation.',
+a:'AChE has a narrow <em>gorge</em>. ACh attracted via peripheral anionic site + π-cation interactions.<br><br><strong>Catalytic triad: Ser200 - His440 - Glu327</strong><br><br><strong>Step 1 — Acetylation:</strong> Ser200 (nucleophile) attacks ester carbonyl → covalent acetyl-enzyme intermediate → choline released.<br><br><strong>Step 2 — Deacetylation:</strong> Water attacks acetylated serine → acetic acid released → free enzyme.',
+memory:'"SHE = Serine-Histidine-Glutamate. Step 1: serine grabs acetyl. Step 2: water rescues serine."',
+exam:null},
+
+{id:30,mod:'m2',type:'Concept',anatomy:['nerves','brain'],
+q:'Compare reversible carbamate, donepezil, and organophosphate AChE inhibitors.',
+hint:'Physostigmine vs Donepezil vs Sarin',
+a:'<strong>Reversible carbamate (physostigmine, neostigmine):</strong> Carbamylates Ser200 → same 2-step but slow decarbamoylation → recovers over hours.<br><br><strong>Non-competitive (donepezil):</strong> Enters gorge → π–π interactions with aromatic residues → does NOT contact triad → blocks ACh access. Reversible. Used in Alzheimer\'s.<br><br><strong>Irreversible OP (Sarin, VX):</strong> Phosphorylates Ser200 → permanent enzyme inhibition → SLUDGE +++ → death. Antidote: atropine + pralidoxime (if early).',
+memory:'"Carbamates = temporary cuffs. Donepezil = bouncer. OPs = superglue."',
+exam:null},
+
+{id:31,mod:'m2',type:'Concept',anatomy:['brain'],
+q:'How do allosteric modulators influence receptor kinetics? What does α represent?',
+hint:'Cooperativity factor between sites',
+a:'Allosteric modulators change receptor conformation, altering kinetics of agonist binding.<br><br><strong>α (cooperativity factor)</strong> quantifies interaction between allosteric and orthosteric sites:<br>• α > 1 → <em>PAM</em>: agonist affinity increased (K<sub>D</sub> effectively divided by α)<br>• 0 < α < 1 → <em>NAM</em>: agonist affinity decreased<br>• α = 1 → no interaction<br><br>β factor handles efficacy effects separately from affinity.',
+memory:'"α > 1 = PAM helps. α < 1 = NAM hinders."',
+exam:null},
+
+{id:32,mod:'m2',type:'Concept',anatomy:['gut','blood'],
+q:'What is LogP? What is optimal for oral drugs?',
+hint:'Goldilocks lipophilicity',
+a:'<strong>LogP</strong> = log of octanol:water partition coefficient = lipophilicity measure.<br><br>cLogP = calculated LogP from structure.<br><br><strong>High LogP (>5):</strong> too lipophilic → poor solubility → poor absorption.<br><strong>Low LogP (<0):</strong> too hydrophilic → can\'t cross membranes.<br><strong>Optimal: ~1–3</strong> → enough lipid solubility to cross membranes but enough water solubility to dissolve.',
+memory:'"Not too fat (>5). Not too watery (<0). Sweet spot 1–3."',
+exam:null},
+
+{id:33,mod:'m2',type:'Concept',anatomy:['gut'],
+q:'What are Lipinski\'s Rule of 5? Limitations?',
+hint:'4 criteria — all involving 5 or 10',
+a:'Predicts oral bioavailability:<br><br>1. <strong>MW < 500 Da</strong><br>2. <strong>LogP < 5</strong><br>3. <strong>H-bond donors < 5</strong><br>4. <strong>H-bond acceptors < 10</strong><br><br><strong>Limitations:</strong> Heuristic only. Some marketed drugs break rules. Does NOT predict efficacy or toxicity. Doesn\'t apply to transporter-mediated absorption.',
+memory:'"All ≤5 or ≤10."',
+exam:'Never say "can\'t be a drug" because of Ro5 violation. Heuristic, not law.'},
+
+{id:34,mod:'m3',type:'Process',anatomy:['gut','blood','liver','kidney'],
+q:'What are the 4 ADME processes? Key determinants?',
+hint:'Absorption → Distribution → Metabolism → Elimination',
+a:'<strong>A — Absorption:</strong> LogP, pKa, P-gp efflux, SLC influx, first-pass effect.<br><strong>D — Distribution:</strong> Plasma protein binding (free fraction only distributes), LogP, BBB, Vd.<br><strong>M — Metabolism:</strong> Phase I = CYP450. Phase II = conjugation → water-soluble.<br><strong>E — Elimination:</strong> Renal (filtration + secretion − reabsorption) or biliary.',
+memory:'"Absorb → Spread → Modify → Remove."',
+exam:null},
+
+{id:35,mod:'m3',type:'Process',anatomy:['gut'],
+q:'Explain drug absorption — passive diffusion (Fick\'s Law) and transporters.',
+hint:'P-gp pumps out, SLC pumps in',
+a:'<strong>Passive diffusion (Fick\'s Law):</strong> Flux = P × A × (C₁ − C₂)<br>Only <em>un-ionised drug</em> has high P.<br><br><strong>SLC influx transporters</strong> (OATs, OATPs, OCTs): <em>increase</em> absorption — pull drug into cells.<br><br><strong>ABC efflux transporters (P-gp, MDR1):</strong> Use ATP to pump drug <em>out</em> of cells → decrease absorption + CNS penetration. Evidence: P-gp knockout mice absorb dramatically more oral paclitaxel.',
+memory:'"P-gp = bouncer. SLC = usher."',
+exam:null},
+
+{id:36,mod:'m3',type:'Process',anatomy:['gut','liver'],
+q:'Explain first-pass effect. What reduces bioavailability?',
+hint:'Portal circulation → liver before systemic',
+a:'<strong>First-pass effect:</strong> Oral drug → portal vein → <em>liver</em> → systemic circulation. Hepatic CYP metabolism reduces drug reaching body.<br><br><strong>Bioavailability (F)</strong> = fraction of oral dose reaching systemic circulation.<br><br>Factors reducing F:<br>1. Poor gut absorption (P-gp, low LogP, ionisation)<br>2. Intestinal CYP3A4 (inhibited by grapefruit → ↑F)<br>3. Hepatic first-pass metabolism (morphine, propranolol have low F orally)<br><br>IV = F = 100% (bypasses first-pass).',
+memory:'"Survive gut + liver = bioavailable."',
+exam:null},
+
+{id:37,mod:'m3',type:'Concept',anatomy:['liver','gut'],
+q:'Name 5 key CYPs. What are CYP3A4 inhibitors and inducers?',
+hint:'3A4 = boss, ~50–60% of drugs',
+a:'<strong>CYP3A4</strong> (~50–60%) — statins, benzos, Ca-channel blockers, HIV drugs.<br>Inducers: rifampicin, carbamazepine, St John\'s wort.<br>Inhibitors: grapefruit (bergamottin), ketoconazole, ritonavir, macrolides.<br><br><strong>CYP2D6</strong> — antidepressants, codeine→morphine. Polymorphic.<br><strong>CYP2C9</strong> — warfarin, phenytoin. Polymorphic.<br><strong>CYP2C19</strong> — clopidogrel, omeprazole. Polymorphic.<br><strong>CYP1A2</strong> — caffeine, theophylline. Induced by smoking.',
+memory:'"3A4 Boss. 2D6 Dodgy. 2C9 Warfarin. 2C19 Clopi+Omepra. 1A2 Coffee+Cigs."',
+exam:'Grapefruit inhibits INTESTINAL CYP3A4 only. IV felodipine unaffected.'},
+
+{id:38,mod:'m3',type:'Concept',anatomy:['liver'],
+q:'CYP inhibition vs induction — clinical consequences?',
+hint:'Toxicity vs treatment failure',
+a:'<strong>Inhibition:</strong> Drug A reduces CYP → Drug B builds up → toxicity.<br>Example: Grapefruit inhibits CYP3A4 → felodipine ↑ → severe hypotension.<br><br><strong>Induction:</strong> Drug A ↑ CYP expression (PXR activation) → Drug B metabolised faster → loss of efficacy.<br>Example: Rifampicin induces CYP3A4 → contraceptive pill metabolised too fast → contraceptive failure → pregnancy.',
+memory:'"Inhibition = toxicity. Induction = failure."',
+exam:null},
+
+{id:39,mod:'m3',type:'Process',anatomy:['liver','kidney'],
+q:'Phase I vs Phase II metabolism? Name a Phase II product more active than parent.',
+hint:'Expose → conjugate. Morphine-6-glucuronide!',
+a:'<strong>Phase I (expose handle):</strong><br>1. Oxidation by CYP450 (most common)<br>2. Reduction<br>3. Hydrolysis (esterases)<br>Product may be more or less active.<br><br><strong>Phase II (conjugate → water-soluble):</strong><br>1. Glucuronidation (UGTs) — most common<br>2. Sulfation (SULTs)<br>3. Glutathione conjugation (GSTs) — protective<br><br><strong>Morphine-6-glucuronide (M6G)</strong>: a Phase II product MORE active than morphine itself!',
+memory:'"Phase I scratches. Phase II anchors and flushes."',
+exam:'Not all Phase II products are inactive. M6G is MORE active than morphine. Classic exam trap.'},
+
+{id:40,mod:'m3',type:'Process',anatomy:['kidney'],
+q:'3 renal elimination processes? How does urinary pH affect elimination?',
+hint:'Filter → secrete → reabsorb. Ion trapping.',
+a:'<strong>1. Glomerular filtration:</strong> Free drug only (<40 kDa).<br><br><strong>2. Active tubular secretion:</strong> OATs (acids) + OCTs (bases) move drug into tubule against gradient.<br><br><strong>3. Tubular reabsorption:</strong> Passive diffusion back into blood. Favours un-ionised drug.<br><br><strong>Ion trapping:</strong><br>• Alkaline urine → weak acid more ionised → less reabsorbed → faster excretion (aspirin OD)<br>• Acidic urine → weak base more ionised → faster excretion (amphetamine OD)',
+memory:'"Filter free. Secrete against gradient. Reabsorb un-ionised. Trap the ionised."',
+exam:null},
+
+{id:41,mod:'m3',type:'Process',anatomy:['blood'],
+q:'Key PK parameters — how to read from a Cp vs time graph?',
+hint:'Cmax, Tmax, AUC, t½, Vd — all readable from plot',
+a:'<strong>C<sub>max</sub></strong> = peak plasma concentration (highest point).<br><strong>T<sub>max</sub></strong> = time at peak.<br><strong>AUC</strong> = area under curve (trapezoidal integration).<br><strong>t½</strong> = time for Cp to halve (read from log-linear elimination phase).<br><strong>Vd</strong> = Dose ÷ C₀ (extrapolated back to time 0).<br><strong>Clearance</strong> = Dose ÷ AUC.<br><br>One-compartment → straight line on log scale.<br>Two-compartment → biexponential.',
+memory:'"CATAV" = Cmax, AUC, Tmax, t½, Vd.',
+exam:null},
+
+{id:42,mod:'m3',type:'Concept',anatomy:['blood','tissues'],
+q:'What is Vd? What does very high/low Vd indicate?',
+hint:'Apparent volume — not real physical volume',
+a:'<strong>Vd = Dose ÷ C₀</strong> — theoretical volume needed to contain drug at observed Cp.<br><br><strong>Low Vd (~5–15 L):</strong> drug stays in plasma → highly protein-bound or large. Example: heparin (~5 L).<br><br><strong>High Vd (100s–1000s L):</strong> drug distributes into tissues → lipophilic or strong tissue binding. Example: amiodarone (~5000 L).<br><br><strong>Clinical:</strong> High Vd drugs cannot be removed by dialysis (drug not in blood).',
+memory:'"Vd = if all drug in one tank, how big would it be?"',
+exam:null},
+
+{id:43,mod:'m3',type:'Concept',anatomy:['liver','brain'],
+q:'What is pharmacogenomics? 4 CYP2D6 phenotypes — codeine consequence?',
+hint:'PM→IM→EM→UM. Codeine is a CYP2D6 prodrug.',
+a:'<strong>Pharmacogenomics</strong> = how genetic variation affects drug response.<br><br><strong>PM (Poor):</strong> 2 non-functional alleles → no enzyme → codeine NOT converted → <em>no analgesia</em>.<br><strong>IM (Intermediate):</strong> 1 reduced allele.<br><strong>EM (Extensive):</strong> normal — majority.<br><strong>UM (Ultrarapid):</strong> gene duplication → excess enzyme → codeine very rapidly→morphine → <em>life-threatening toxicity</em>.<br><br>Ethnic: ~1% Caucasians UM vs ~29% Ethiopians.',
+memory:'"PM = no effect. UM = overdose."',
+exam:'SNPs are responsible for most variation. Ethnic frequency increases RISK, not certainty.'},
+
+{id:44,mod:'m3',type:'Process',anatomy:['blood'],
+q:'What is therapeutic drug monitoring (TDM)? Why for low TI drugs?',
+hint:'Therapeutic window — MEC to MTC',
+a:'<strong>TDM</strong> = measuring plasma drug concentrations to optimise dosing — keep in therapeutic window.<br><br><strong>Window:</strong> MEC (min effective concentration) to MTC (min toxic concentration).<br><br><strong>Low TI drugs needing TDM:</strong><br>• Digoxin (TI ~2) — arrhythmias if toxic<br>• Lithium (TI ~2–3) — nephrotoxicity, tremor<br>• Warfarin — bleeding<br>• Vancomycin, aminoglycosides<br><br>Accounts for pharmacogenetic and patient variability.',
+memory:'"Low TI = tightrope. TDM = safety net."',
+exam:null},
+
+{id:45,mod:'m4',type:'Process',anatomy:['systemic'],
+q:'Walk through the complete drug development pathway in Australia.',
+hint:'Target → hit → lead → preclinical → Phase 1→2→3 → TGA → Phase 4',
+a:'<div class="step"><div class="step-n">1</div><div><strong>Target ID:</strong> disease-relevant molecule</div></div><div class="step"><div class="step-n">2</div><div><strong>Hit ID:</strong> HTS of compound libraries</div></div><div class="step"><div class="step-n">3</div><div><strong>Lead optimisation:</strong> SAR → Ro5 check</div></div><div class="step"><div class="step-n">4</div><div><strong>Preclinical:</strong> in vitro + animal tox → IND submission</div></div><div class="step"><div class="step-n">5</div><div><strong>Phase 1:</strong> 20–80 healthy. Safety, PK</div></div><div class="step"><div class="step-n">6</div><div><strong>Phase 2:</strong> 100–300 patients. Efficacy signal</div></div><div class="step"><div class="step-n">7</div><div><strong>Phase 3:</strong> 1,000–5,000. RCT</div></div><div class="step"><div class="step-n">8</div><div><strong>TGA approval</strong> → ARTG → PBS</div></div><div class="step"><div class="step-n">9</div><div><strong>Phase 4:</strong> post-market surveillance</div></div>',
+memory:'"THILPPP TP" = Target, Hit, Lead, Preclinical, P1, P2, P3, TGA, P4.',
+exam:null},
+
+{id:46,mod:'m4',type:'Concept',anatomy:['systemic'],
+q:'Compare Phase 1, 2, 3, 4 clinical trials — participants, question, endpoints.',
+hint:'Safety → efficacy → confirmation → post-market',
+a:'<strong>Phase 1 — "Is it safe?"</strong><br>20–80 healthy. Safety, dose escalation, PK. First-in-human.<br><br><strong>Phase 2 — "Does it work?"</strong><br>100–300 patients. Proof of concept, dose-finding.<br><br><strong>Phase 3 — "Better than current?"</strong><br>1,000–5,000. RCT, double-blind, controlled. Registration data.<br><br><strong>Phase 4 — Post-market surveillance</strong><br>Real-world use. Detect rare AEs (e.g. rofecoxib withdrawn after Phase 4 data).',
+memory:'"1 People (healthy). 2 Patients (small). 3 Population (RCT). 4 Post-market."',
+exam:null},
+
+{id:47,mod:'m4',type:'Concept',anatomy:['systemic'],
+q:'What is the preclinical efficacy testing framework?',
+hint:'In vitro → in vivo → PK/PD → CTD',
+a:'1. <strong>In vitro:</strong> cell/biochemical assays. IC₅₀, EC₅₀, selectivity. High-throughput screening.<br>2. <strong>In vivo:</strong> rodent disease models. Dose-response, animal PK.<br>3. <strong>PK/PD:</strong> link plasma concentration to effect.<br>4. <strong>Species selection:</strong> choose species metabolising like humans.<br>5. <strong>CTD package</strong> → submitted to TGA for IND.',
+memory:'"In vitro → in vivo → PK/PD → CTD → IND."',
+exam:null},
+
+{id:48,mod:'m4',type:'Concept',anatomy:['systemic'],
+q:'What preclinical toxicology studies are required before Phase 1?',
+hint:'Acute + repeat + safety pharm + genotox + reproductive',
+a:'1. <strong>Acute tox:</strong> single dose, multiple species → LD₅₀.<br>2. <strong>Repeat-dose tox:</strong> duration matches human trial.<br>3. <strong>Safety pharmacology:</strong> CV (QT interval, hERG), respiratory, CNS.<br>4. <strong>Genotoxicity:</strong> Ames test, micronucleus.<br>5. <strong>Reproductive tox:</strong> teratogenicity (e.g. thalidomide lesson).<br>6. <strong>In vitro metabolism:</strong> identify CYPs and transporters.<br><br>All in CTD submission.',
+memory:'"ARSGRM" = Acute, Repeat, Safety pharm, Genotox, Reproductive, Metabolism.',
+exam:null},
+
+{id:49,mod:'m4',type:'Concept',anatomy:['systemic'],
+q:'What is the TGA and CTD? Describe the Australian drug approval process.',
+hint:'Therapeutic Goods Administration, Common Technical Document',
+a:'<strong>TGA</strong> = Australian government body regulating therapeutic products. Equivalent to FDA (US) or EMA (Europe).<br><br><strong>Process:</strong><br>1. Sponsor submits <em>CTD (Common Technical Document)</em><br>2. TGA evaluates quality, safety, efficacy<br>3. Approval → drug added to <em>ARTG</em> (Register of Therapeutic Goods)<br>4. PBS listing for subsidised access<br><br><strong>CTD contains:</strong> quality (chemistry, manufacturing), preclinical safety, clinical trial data (Phases 1–3).<br><br>Post-market: pharmacovigilance ongoing.',
+memory:'"TGA = Australian FDA. CTD = complete dossier. ARTG = approved list."',
+exam:null},
+
+{id:50,mod:'m4',type:'Concept',anatomy:['systemic'],
+q:'What are the ethical considerations in drug development?',
+hint:'Helsinki, informed consent, ethics committees',
+a:'1. <strong>Autonomy / informed consent</strong> — participants fully informed of risks, benefits, alternatives.<br>2. <strong>Beneficence / Non-maleficence</strong> — benefits must outweigh risks.<br>3. <strong>Justice</strong> — fair selection; vulnerable populations protected.<br>4. <strong>Declaration of Helsinki</strong> — international ethical framework.<br>5. <strong>Ethics committee review</strong> — all trials require approval.<br>6. <strong>GCP (Good Clinical Practice)</strong> — international trial conduct standard.',
+memory:'"ABJ + Helsinki + Ethics Committee + GCP."',
+exam:null},
+
+];
+
+// ════════════════════════════════════════════════
+// ANATOMY MAPPING — visual organ tags
+// ════════════════════════════════════════════════
+const ANATOMY_LABELS = {
+  'heart':'❤️ Heart',
+  'lungs':'🫁 Lungs',
+  'brain':'🧠 Brain/CNS',
+  'nerves':'⚡ Nerves',
+  'gut':'🥗 Gut',
+  'liver':'🫀 Liver',
+  'kidney':'🫘 Kidneys',
+  'blood':'💉 Blood',
+  'blood-vessels':'🩸 Blood Vessels',
+  'muscle':'💪 Muscle',
+  'eye':'👁️ Eye',
+  'bladder':'🚰 Bladder',
+  'glands':'💧 Glands',
+  'adrenals':'⚙️ Adrenals',
+  'tissues':'🧬 Tissues',
+  'systemic':'🌐 Systemic'
+};
+
+// ════════════════════════════════════════════════
+// STATE + LOCALSTORAGE
+// ════════════════════════════════════════════════
+const STORE_KEY = 'pcol2021_pwa_v1';
+let allCards = CARD_DEFS.map(c=>({...c,interval:0,ease:2.5,due:0,reps:0,lapses:0,firstSeen:null}));
+let studyHistory={};
+let currentStreak=0;
+let lastStudiedDate=null;
+let examDate=null;
+let dailyNewLimit=20;
+let dailyReviewLimit=100;
+let theme='auto';
+let todayNewSeen=0;
+let todayReviewsSeen=0;
+let lastDayReset=null;
+
+let sessionCards=[], currentFilter='all', currentIdx=0, isRevealed=false;
+let sessionStats={again:0,hard:0,good:0,easy:0};
+
+function loadState(){
+  try{const r=localStorage.getItem(STORE_KEY);return r?JSON.parse(r):null;}catch(e){return null;}
+}
+function saveState(){
+  try{
+    localStorage.setItem(STORE_KEY,JSON.stringify({
+      cards:allCards.map(c=>({id:c.id,interval:c.interval,ease:c.ease,due:c.due,reps:c.reps,lapses:c.lapses,firstSeen:c.firstSeen})),
+      history:studyHistory,streak:currentStreak,lastStudied:lastStudiedDate,
+      examDate,dailyNewLimit,dailyReviewLimit,theme,
+      todayNewSeen,todayReviewsSeen,lastDayReset
+    }));
+  }catch(e){console.error('Save failed',e);}
+}
+function initState(){
+  const s=loadState();
+  if(s){
+    const m={};(s.cards||[]).forEach(c=>{m[c.id]=c;});
+    allCards=CARD_DEFS.map(d=>{const sv=m[d.id];return sv?{...d,...sv}:{...d};});
+    studyHistory=s.history||{};
+    currentStreak=s.streak||0;
+    lastStudiedDate=s.lastStudied||null;
+    examDate=s.examDate||null;
+    dailyNewLimit=s.dailyNewLimit||20;
+    dailyReviewLimit=s.dailyReviewLimit||100;
+    theme=s.theme||'auto';
+    todayNewSeen=s.todayNewSeen||0;
+    todayReviewsSeen=s.todayReviewsSeen||0;
+    lastDayReset=s.lastDayReset||null;
+  }
+  // Reset daily counters if new day
+  const today=todayStr();
+  if(lastDayReset!==today){
+    todayNewSeen=0;todayReviewsSeen=0;lastDayReset=today;saveState();
+  }
+}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function recordStudyDay(){
+  const t=todayStr();
+  studyHistory[t]=(studyHistory[t]||0)+1;
+  if(lastStudiedDate===t)return;
+  const y=new Date();y.setDate(y.getDate()-1);
+  const ys=y.toISOString().slice(0,10);
+  currentStreak=(lastStudiedDate===ys)?currentStreak+1:1;
+  lastStudiedDate=t;
+}
+
+// ════════════════════════════════════════════════
+// ANKI SM-2 ALGORITHM
+// ════════════════════════════════════════════════
+function applyRating(card,score){
+  const now=Date.now();
+  if(score===1){ // Again
+    card.lapses++;
+    card.interval=Math.max(1,Math.round(card.interval*0.5));
+    card.ease=Math.max(1.3,card.ease-0.2);
+    card.due=now+60000;
+    return 'requeue';
+  }
+  // For new cards (reps===0) — Anki learning steps
+  if(card.reps===0){
+    if(score===2)card.interval=1;
+    else if(score===3)card.interval=1;
+    else if(score===4)card.interval=4;
+    card.reps++;
+    card.due=now+card.interval*86400000;
+    return 'graduate';
+  }
+  // Mature cards — proper SM-2
+  if(score===2){
+    card.interval=Math.max(1,Math.round(card.interval*1.2));
+    card.ease=Math.max(1.3,card.ease-0.15);
+  }else if(score===3){
+    card.interval=Math.round(card.interval*card.ease);
+  }else if(score===4){
+    card.interval=Math.round(card.interval*card.ease*1.3);
+    card.ease=Math.min(3.5,card.ease+0.15);
+  }
+  card.reps++;
+  card.due=now+card.interval*86400000;
+  return 'review';
+}
+
+// ════════════════════════════════════════════════
+// EXAM DATE LOGIC
+// ════════════════════════════════════════════════
+function getDaysToExam(){
+  if(!examDate)return null;
+  const now=new Date();now.setHours(0,0,0,0);
+  const exam=new Date(examDate);exam.setHours(0,0,0,0);
+  return Math.ceil((exam-now)/86400000);
+}
+
+function getRecommendedDailyNew(){
+  if(!examDate)return dailyNewLimit;
+  const days=getDaysToExam();
+  if(days<=0)return 0;
+  const unstartedCards=allCards.filter(c=>c.reps===0).length;
+  if(unstartedCards===0)return 0;
+  // Spread new cards over the days available, reserving last 7 days for review
+  const learningDays=Math.max(1,days-7);
+  return Math.ceil(unstartedCards/learningDays);
+}
+
+// ════════════════════════════════════════════════
+// SESSION
+// ════════════════════════════════════════════════
+function getFiltered(){return allCards.filter(c=>currentFilter==='all'||c.mod===currentFilter);}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+
+function buildSession(dueOnly=false){
+  const now=Date.now(),f=getFiltered();
+  let due=f.filter(c=>c.reps>0&&c.due<=now);
+  shuffle(due);
+  // Apply daily review limit
+  const reviewsLeft=Math.max(0,dailyReviewLimit-todayReviewsSeen);
+  due=due.slice(0,reviewsLeft);
+  
+  if(dueOnly){
+    sessionCards=due;
+  } else {
+    let nw=f.filter(c=>c.reps===0);
+    shuffle(nw);
+    // Use recommended daily new if exam date set, otherwise daily limit
+    const targetNew=examDate?Math.min(getRecommendedDailyNew(),dailyNewLimit):dailyNewLimit;
+    const newLeft=Math.max(0,targetNew-todayNewSeen);
+    nw=nw.slice(0,newLeft);
+    sessionCards=[...due,...nw];
+  }
+  currentIdx=0;sessionStats={again:0,hard:0,good:0,easy:0};
+}
+
+function calcIntervals(c){
+  const d=ms=>{if(ms<60000)return '<1m';if(ms<3600000)return Math.round(ms/60000)+'m';if(ms<86400000)return Math.round(ms/3600000)+'h';return Math.round(ms/86400000)+'d';};
+  // Simulate each rating
+  const sim=score=>{
+    const tmp={...c};
+    applyRating(tmp,score);
+    return tmp.due-Date.now();
+  };
+  return{
+    again:d(sim(1)),
+    hard:d(sim(2)),
+    good:d(sim(3)),
+    easy:d(sim(4))
+  };
+}
+
+const MOD_LABELS={m1:'M1 PD',m2:'M2 MolPharm',m3:'M3 PK',m4:'M4 DrugDev'};
+
+function showCard(){
+  if(currentIdx>=sessionCards.length){showFinished();return;}
+  const c=sessionCards[currentIdx];isRevealed=false;
+  const now=Date.now();
+  const isNew=c.reps===0;
+  let db=isNew?'<span class="anatomy-badge">✨ New</span>':(c.due<=now?'<span class="anatomy-badge" style="color:var(--hard);border-color:rgba(240,192,64,.3);background:rgba(240,192,64,.06);">🔄 Review</span>':'<span class="anatomy-badge" style="color:var(--m1);border-color:rgba(91,200,245,.3);background:rgba(91,200,245,.06);">📖 Learning</span>');
+  
+  document.getElementById('card-meta').innerHTML=`<span class="module-badge badge-${c.mod}">${MOD_LABELS[c.mod]}</span><span class="card-type">${c.type}</span>${db}<span class="card-num">${currentIdx+1}/${sessionCards.length}</span>`;
+  
+  const fc=document.getElementById('flashcard');
+  fc.className='flashcard '+c.mod;
+  document.getElementById('card-q').innerHTML=c.q;
+  document.getElementById('card-hint').innerHTML=c.hint?'💡 '+c.hint:'';
+  document.getElementById('card-a').innerHTML=c.a;
+  document.getElementById('card-memory').innerHTML=c.memory?`<div class="memory-hook">${c.memory}</div>`:'';
+  document.getElementById('card-exam').innerHTML=c.exam?`<div class="exam-flag">${c.exam}</div>`:'';
+  
+  // Anatomy map
+  const am=document.getElementById('anatomy-map');
+  if(c.anatomy && c.anatomy.length>0){
+    am.style.display='flex';
+    am.innerHTML='<span style="font-size:10px;color:var(--muted);margin-right:4px;align-self:center;">📍 Acts on:</span>'+
+      c.anatomy.map(a=>`<span class="anatomy-pill ${a}">${ANATOMY_LABELS[a]||a}</span>`).join('');
+  } else { am.style.display='none'; }
+  
+  fc.classList.remove('revealed');
+  
+  const iv=calcIntervals(c);
+  document.getElementById('next-again').textContent=iv.again;
+  document.getElementById('next-hard').textContent=iv.hard;
+  document.getElementById('next-good').textContent=iv.good;
+  document.getElementById('next-easy').textContent=iv.easy;
+  
+  updateTopStats();
+}
+
+function reveal(){
+  if(isRevealed)return;
+  isRevealed=true;
+  document.getElementById('flashcard').classList.add('revealed');
+}
+
+function rate(score,e){
+  if(e)e.stopPropagation();
+  if(!isRevealed)return;
+  const c=sessionCards[currentIdx];
+  const wasNew=c.reps===0;
+  const result=applyRating(c,score);
+  
+  if(wasNew && result!=='requeue') todayNewSeen++;
+  else if(!wasNew) todayReviewsSeen++;
+  
+  if(result==='requeue'){
+    sessionCards.push({...c});
+  }
+  
+  // Sync to allCards
+  const idx=allCards.findIndex(x=>x.id===c.id);
+  if(idx>-1)Object.assign(allCards[idx],{interval:c.interval,ease:c.ease,due:c.due,reps:c.reps,lapses:c.lapses});
+  
+  sessionStats[{1:'again',2:'hard',3:'good',4:'easy'}[score]]++;
+  recordStudyDay();
+  saveState();
+  renderHistory();
+  updateStreak();
+  
+  currentIdx++;
+  showCard();
+}
+
+function showFinished(){
+  document.getElementById('card-wrap').style.display='none';
+  const f=document.getElementById('finished');
+  f.style.display='block';
+  const s=sessionStats;
+  const total=s.again+s.hard+s.good+s.easy;
+  const msg=document.getElementById('finished-msg');
+  if(total===0){
+    msg.innerHTML='No cards due right now. Great job staying on top of your reviews!';
+  } else {
+    msg.innerHTML=`You reviewed ${total} cards. ${examDate?`<br>${getDaysToExam()} days to exam.`:''}`;
+  }
+  document.getElementById('review-summary').innerHTML=
+    `<span class="summary-chip" style="border-color:rgba(240,106,106,.4);color:var(--again);">Again: ${s.again}</span>
+     <span class="summary-chip" style="border-color:rgba(240,192,64,.4);color:var(--hard);">Hard: ${s.hard}</span>
+     <span class="summary-chip" style="border-color:rgba(91,200,245,.4);color:var(--good);">Good: ${s.good}</span>
+     <span class="summary-chip" style="border-color:rgba(62,207,142,.4);color:var(--easy);">Easy: ${s.easy}</span>`;
+  updateTopStats();
+}
+
+function restart(){
+  document.getElementById('card-wrap').style.display='flex';
+  document.getElementById('finished').style.display='none';
+  buildSession(false);showCard();
+}
+function restartDue(){
+  document.getElementById('card-wrap').style.display='flex';
+  document.getElementById('finished').style.display='none';
+  buildSession(true);
+  if(sessionCards.length===0){
+    showFinished();
+  } else showCard();
+}
+function setFilter(f){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.filter-btn.${f}`).classList.add('active');
+  restart();
+}
+
+// ════════════════════════════════════════════════
+// STATS + HISTORY
+// ════════════════════════════════════════════════
+function updateTopStats(){
+  const f=getFiltered(),now=Date.now();
+  document.getElementById('stat-new').textContent=f.filter(c=>c.reps===0).length+' new';
+  document.getElementById('stat-review').textContent=f.filter(c=>c.reps>0&&c.due<=now).length+' due';
+  document.getElementById('stat-done').textContent=f.filter(c=>c.reps>0&&c.due>now).length+' learned';
+  
+  const examDays=getDaysToExam();
+  const examEl=document.getElementById('stat-exam-days');
+  if(examDays!==null){
+    if(examDays>0)examEl.textContent=`${examDays} days to exam`;
+    else if(examDays===0)examEl.textContent='Exam today! 🎯';
+    else examEl.textContent='Exam passed';
+  } else { examEl.textContent='Set exam date'; }
+  
+  const pct=sessionCards.length>0?((currentIdx/sessionCards.length)*100):0;
+  document.getElementById('progress').style.width=pct+'%';
+}
+function updateStreak(){document.getElementById('stat-streak').textContent=currentStreak+' streak 🔥';}
+
+function renderHistory(){
+  const g=document.getElementById('history-grid');g.innerHTML='';
+  const t=todayStr();
+  let total=0;
+  for(let i=13;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toISOString().slice(0,10);
+    const cnt=studyHistory[ds]||0;total+=cnt;
+    let cl='dot-empty',lbl='';
+    if(cnt>0&&cnt<10){cl='dot-low';lbl=cnt;}
+    else if(cnt>=10&&cnt<25){cl='dot-med';lbl=cnt;}
+    else if(cnt>=25){cl='dot-high';lbl=cnt;}
+    g.innerHTML+=`<div class="history-dot ${cl}${ds===t?' dot-today':''}" title="${ds}: ${cnt} cards">${lbl}</div>`;
+  }
+  document.getElementById('history-total').textContent=`${total} cards`;
+}
+
+// ════════════════════════════════════════════════
+// SETTINGS / THEME
+// ════════════════════════════════════════════════
+function openSettings(){
+  document.getElementById('modal-settings').classList.add('open');
+  document.getElementById('exam-date').value=examDate||'';
+  document.getElementById('daily-new').value=dailyNewLimit;
+  document.getElementById('daily-review').value=dailyReviewLimit;
+  updateThemeButtons();
+  updateCountdown();
+}
+function closeSettings(){document.getElementById('modal-settings').classList.remove('open');}
+
+function setExamDate(d){
+  examDate=d;saveState();updateCountdown();updateTopStats();
+}
+function updateCountdown(){
+  const days=getDaysToExam();
+  const dEl=document.getElementById('countdown-days');
+  const lEl=document.getElementById('countdown-label');
+  const recBox=document.getElementById('recommend-box');
+  if(days===null){dEl.textContent='—';lEl.textContent='Set your exam date';recBox.style.display='none';return;}
+  dEl.textContent=days>0?days:(days===0?'!':'⏰');
+  lEl.textContent=days>0?`days until ${new Date(examDate).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}`:(days===0?'Exam today! Final review.':'Exam has passed');
+  
+  if(days>0){
+    const newRemaining=allCards.filter(c=>c.reps===0).length;
+    const rec=getRecommendedDailyNew();
+    const learningDays=Math.max(1,days-7);
+    recBox.style.display='block';
+    if(newRemaining>0){
+      recBox.innerHTML=`📚 To finish learning all ${newRemaining} new cards before the final week of revision, study <strong>~${rec} new cards/day</strong> for the next ${learningDays} days. The last 7 days will be pure review.`;
+    } else {
+      recBox.innerHTML=`✅ All cards started. Use the next ${days} days for spaced repetition reviews.`;
+    }
+  } else {
+    recBox.style.display='none';
+  }
+}
+function setDailyLimit(type,val){
+  if(type==='new')dailyNewLimit=parseInt(val);
+  else dailyReviewLimit=parseInt(val);
+  saveState();updateTopStats();
+}
+
+function setTheme(t){
+  theme=t;
+  applyTheme();
+  updateThemeButtons();
+  saveState();
+}
+function applyTheme(){
+  let actual=theme;
+  if(theme==='auto'){
+    actual=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
+  }
+  document.documentElement.setAttribute('data-theme',actual);
+  document.querySelector('meta[name="theme-color"]').setAttribute('content',actual==='dark'?'#5bc8f5':'#0e7eb8');
+}
+function updateThemeButtons(){
+  document.querySelectorAll('.theme-toggle button').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('theme-'+theme);
+  if(btn)btn.classList.add('active');
+}
+function toggleTheme(){
+  const order=['dark','light','auto'];
+  const i=order.indexOf(theme);
+  setTheme(order[(i+1)%3]);
+}
+
+// ════════════════════════════════════════════════
+// DATA EXPORT / IMPORT
+// ════════════════════════════════════════════════
+function exportData(){
+  const data=loadState();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`pcol2021-backup-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      localStorage.setItem(STORE_KEY,JSON.stringify(data));
+      location.reload();
+    }catch(err){alert('Import failed: invalid file');}
+  };
+  reader.readAsText(file);
+}
+function resetAll(){
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+}
+
+// ════════════════════════════════════════════════
+// KEYBOARD
+// ════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();if(!isRevealed)reveal();return;}
+  if(!isRevealed)return;
+  if(e.key==='1')rate(1,null);
+  if(e.key==='2')rate(2,null);
+  if(e.key==='3')rate(3,null);
+  if(e.key==='4')rate(4,null);
+});
+
+// ════════════════════════════════════════════════
+// PWA INSTALL HINT (Safari/iOS only)
+// ════════════════════════════════════════════════
+function checkInstallHint(){
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone=window.navigator.standalone===true;
+  const dismissed=localStorage.getItem('install_hint_dismissed');
+  if(isIOS && !isStandalone && !dismissed){
+    setTimeout(()=>{document.getElementById('install-hint').classList.add('show');
+      document.querySelector('#install-hint .close').addEventListener('click',()=>{
+        localStorage.setItem('install_hint_dismissed','1');
+      });
+    },3000);
+  }
+}
+
+// Listen for system theme changes when auto
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{
+  if(theme==='auto')applyTheme();
+});
+
+// ════════════════════════════════════════════════
+// REGISTER SERVICE WORKER
+// ════════════════════════════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').then(
+      r=>console.log('SW registered'),
+      e=>console.log('SW failed',e)
+    );
+  });
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+initState();
+applyTheme();
+renderHistory();
+updateStreak();
+buildSession(false);
+showCard();
+checkInstallHint();
+</script>
+</body>
+</html>
